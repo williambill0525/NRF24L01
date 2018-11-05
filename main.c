@@ -20,10 +20,10 @@ const uint8_t RX_ADDRESS[RX_ADR_WIDTH]={0x31,0x4E,0x6F,0x64,0x65};
 static void SPI1_Config(void);
 /* Private functions ---------------------------------------------------------*/
 void NRF24L01_Init(void);
-void NRF24L01_Init(void);
 void NRF24L01_WriteReg(uint8_t address,uint8_t value);
 void NRF24L01_Rx_Mode(void);
 void NRF24L01_Tx_Mode(void);
+void NRF24L01_TxPacket(uint8_t *txbuf);
 void NRF24L01_Write_Buf(uint8_t reg ,uint8_t *pBuf ,uint8_t len);
 
 /**
@@ -41,28 +41,22 @@ int main(void)
 	NRF24L01_Tx_Mode();
   while (1)
   {
-		NRF24L01_Write_Buf(WRITE_PL_NO_ACK,(uint8_t*)ar,5);
-		for(int i = 0; i<10000;i++);
+		NRF24L01_TxPacket((uint8_t*)ar);
+		for(int i=0;i<10000;i++);
   }
 }
 
 void NRF24L01_Init(void)
 {
-	RCC_APB2PeriphClockCmd(RCC_AHBPeriph_GPIOA |RCC_AHBPeriph_GPIOC ,ENABLE);
-	GPIO_InitStructure.GPIO_Pin   = GPIO_Pin_1 | GPIO_Pin_4;
+	RCC_APB2PeriphClockCmd(RCC_AHBPeriph_GPIOA  ,ENABLE);
+	GPIO_InitStructure.GPIO_Pin   = GPIO_Pin_1 | GPIO_Pin_4 |GPIO_Pin_12 ;
   GPIO_InitStructure.GPIO_Mode  = GPIO_Mode_OUT  ;   
   GPIO_InitStructure.GPIO_Speed = GPIO_Speed_Level_3;
 	GPIO_InitStructure.GPIO_PuPd  = GPIO_PuPd_UP;
   GPIO_Init(GPIOA, &GPIO_InitStructure);  
 	
-	GPIO_InitStructure.GPIO_Pin   = GPIO_Pin_4;
-  GPIO_InitStructure.GPIO_Mode  = GPIO_Mode_OUT  ;   
-  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_Level_3;
-	GPIO_InitStructure.GPIO_PuPd  = GPIO_PuPd_UP;
-  GPIO_Init(GPIOC, &GPIO_InitStructure);  
-	
 	GPIO_SetBits(GPIOA,GPIO_Pin_4);
-	GPIO_ResetBits(GPIOC,GPIO_Pin_4);
+	GPIO_ResetBits(GPIOA,GPIO_Pin_12);
 }
 
 void NRF24L01_WriteReg(uint8_t address,uint8_t value)
@@ -94,7 +88,7 @@ void NRF24L01_Rx_Mode(void)
 
 void NRF24L01_Tx_Mode(void)
 {
-	GPIO_ResetBits(GPIOC,GPIO_Pin_4);
+	GPIO_ResetBits(GPIOA,GPIO_Pin_12);
 	NRF24L01_Write_Buf(NRF_WRITE_REG+TX_ADDR,(uint8_t*)TX_ADDRESS,TX_ADR_WIDTH);
 	NRF24L01_Write_Buf(NRF_WRITE_REG+RX_ADDR_P0,(uint8_t*)RX_ADDRESS,RX_ADR_WIDTH);
 	
@@ -105,15 +99,14 @@ void NRF24L01_Tx_Mode(void)
 	NRF24L01_WriteReg(NRF_WRITE_REG+RF_SETUP,0x0F);
 	NRF24L01_WriteReg(NRF_WRITE_REG+CONFIG,0x0E);
 	
-	GPIO_SetBits(GPIOC,GPIO_Pin_4);
+	GPIO_SetBits(GPIOA,GPIO_Pin_12);
 }
 
 void NRF24L01_TxPacket(uint8_t *txbuf)
 {
-	GPIO_SetBits(GPIOC,GPIO_Pin_4);
+	GPIO_SetBits(GPIOA,GPIO_Pin_12);
 	NRF24L01_Write_Buf(WR_TX_PLOAD,txbuf,TX_PLOAD_WIDTH);
-	GPIO_ResetBits(GPIOC,GPIO_Pin_4);
-	while(GPIO_ReadInputDataBit(GPIOA,GPIO_Pin_1) != 0);
+	GPIO_ResetBits(GPIOA,GPIO_Pin_12);
 }
 
 void NRF24L01_Write_Buf(uint8_t address ,uint8_t *pBuf ,uint8_t len)
